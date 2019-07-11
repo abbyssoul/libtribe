@@ -1,0 +1,95 @@
+#!/usr/bin/env sh
+
+DIR="$( cd "$( dirname "${0}" )" && pwd )"
+prefix=/usr/local
+debugsym=true
+sanitizer=true
+
+# Figure out project name:
+project_name=$(basename $DIR)
+if [ -f "PROJECT.name" ]; then
+    project_name=$(cat "PROJECT.name")
+else
+    echo "Warning: no file 'PROJECT.name' found, guessing project name: '${project_name}'"
+fi
+
+
+for arg in "$@"; do
+    case "$arg" in
+    --prefix=*)
+        prefix=`echo $arg | sed 's/--prefix=//'`
+        ;;
+
+    --conan-profile=*)
+        conan_profile=`echo $arg | sed 's/--conan-profile=//'`
+        ;;
+
+    --enable-debug )
+        debugsym=true
+        ;;
+    --disable-debug )
+        debugsym=false
+        ;;
+
+    --enable-sanitizer )
+        sanitizer=true
+        ;;
+    --disable-sanitizer )
+        sanitizer=false
+        ;;
+
+    --help)
+        echo 'usage: ./configure [options]'
+        echo 'options:'
+        echo '  --prefix=<path>: installation prefix'
+        echo '  --conan-profile=<profile>: Use custom conan profil'
+        echo '  --enable-debug include debug symbols'
+        echo '  --disable-debug do not include debug symbols'
+        echo '  --enable-sanitizer To enable -fsanitize compiler option'
+        echo '  --disable-sanitizer To disable -fsanitize compiler option'
+        echo ''
+        echo 'all invalid options are silently ignored'
+        exit 0
+        ;;
+
+    *)
+        echo "Unexpected option '$arg'"
+        exit 0
+        ;;
+    esac
+done
+
+echo "Generating Makefile for ${project_name}..."
+echo "# Generated Makefile for ${project_name}: $(date)" > Makefile
+echo "PREFIX ?= ${prefix}" >> Makefile
+echo "PROJECT ?= ${project_name}" >> Makefile
+
+
+if $debugsym; then
+    echo 'dbg = -g' >> Makefile
+fi
+
+if $sanitizer; then
+    echo 'sanitize = address,undefined,leak' >> Makefile
+fi
+
+if [ ! -z "$conan_profile" ] ; then
+    echo "CONAN_PROFILE ?= ${conan_profile}" >> Makefile
+fi
+
+if [ ! -z "${CXX}" ] || [ ! -z "${CC}" ] ; then
+    echo "Using custom copiler: CXX=$CXX CC=$CC"
+    printf "\n# Compiler config\n" >> Makefile
+
+    if [ ! -z "${CXX}" ] ; then
+        echo "CXX ?= ${CXX}" >> Makefile
+    fi
+
+    if [ ! -z "${CC}" ]; then
+        echo "CC ?= ${CC}" >> Makefile
+    fi
+fi
+
+echo '' >> Makefile
+cat Makefile.in >> Makefile
+echo "Configuration complete, type 'make' to build ${project_name}."
