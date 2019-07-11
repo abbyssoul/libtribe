@@ -35,9 +35,13 @@ See [docs](docs/intro.md) for more information about project motivation and [pro
 
 # Usage
 The library is designed to provide components for building distributed applications.
-It does not provide networking. That is user responsibility to provide IO.
-For example when a message is received or read from a file - user can pass this message
-to the message handler to possibly update an estimated state of the cluster.
+It does not provide networking leaving it up to a library user to chose IO method.
+Some user may chose sockets directly, while other already have networking layer such as libuv or boost.asio.
+
+
+In order to use the library a user must get a message buffer from an IO subsitem,  
+for example when a message is received on a UDP socket or read from a file.
+This message then should be passed to the message handler to possibly update an estimated state of the cluster.
 The update function in turn produces messages that library user must dispatch to the network.
 
 
@@ -45,13 +49,37 @@ The update function in turn produces messages that library user must dispatch to
 #include <tribe/protocol.hpp>  // Convenience header for message builders and parser
 #include <tribe/membership.hpp>   // Group membership model
 
+// A handler of the datagram that user must implement
+tribe::PeersModel handleDatagram(IO& io, tribe::PeersModel model, Solace::MemoryView msgBuffer) {
+
+  // parseAndUpdate will produce a new model given a valid message is parsed from the buffer
+  auto [newModel, outMessages] = tibe::parseAndUpdate(model, msgBuffer);
+
+  // It is user's should serialise and sent message out to the network,
+  // Or enqueue them to send later.
+  for (auto const& msg : outMessages) {
+    io << msg;
+  }
+
+  // A new model should be considered a new view of the cluster
+  return newModel;
+}
+
+```
+
+`parseAndUpdate` function is a convenience function for parsing raw messages and updating the model.
+In case a more fine grained control is required - the process can be separated into two steps:
+
+```C++
+
 //... inside your IO service that handles datagrams
-tribe::PeersModel handleDatagram(tribe::PeersModel model, Solace::MemoryView msgBuffer) {
+Solace::Result<tribe::PeersModelUpdate, Error>
+parseDatagram(tribe::PeersModel model, Solace::MemoryView msgBuffer) {
   auto maybeMessage = tribe::Gossip::MessageParser{}
           .parse(reader);
 
   if (!maybeMessage) {  // Data in the buffer does not constitute a valid gossip message.
-      return false;
+      return maybeMessage.getError();
   }
 
   return tribe::update(model, *maybeMessage);
