@@ -30,7 +30,7 @@ That is why this implementation of SWIM includes a notion of peer capacity - tha
 
 Key observation here is that for a node to be part of a group it must be in peer list of at list one other node. It is not enough for a node to know other peers. This peers must know about that node as 'connections' are symmetrical.
 
-See [docs](docs/into.md) for more information about project motivation and [protocol](docs/protocol.md) design.
+See [docs](docs/intro.md) for more information about project motivation and [protocol](docs/protocol.md) design.
 
 
 # Usage
