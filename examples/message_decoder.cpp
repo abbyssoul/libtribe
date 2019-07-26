@@ -14,8 +14,12 @@
 *  limitations under the License.
 */
 
-#include <tribe/parser.hpp>
+#include <tribe/protocol/messageParser.hpp>
+#include <solace/stringView.hpp>
 
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <getopt.h>
 
 
@@ -70,7 +74,7 @@ int main(int argc, char* const* argv) {
             return EXIT_FAILURE;
     }
 
-    Parser proc{maxMessageSize, requiredVersion};
+	MessageParser proc;
     MemoryManager memManager{proc.maxPossibleMessageSize()};
     auto buffer = memManager.allocate(proc.maxPossibleMessageSize());
 

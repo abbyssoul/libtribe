@@ -15,10 +15,10 @@
 */
 /*******************************************************************************
  * libTribe Unit Test Suit
- *	@file test/test_model.cpp
+ *	@file test/test_protocol.cpp
  *	@brief		Test suit for tribe::model
  ******************************************************************************/
-#include "tribe/protocol.hpp"    // Class being tested.
+#include "tribe/protocol/messageParser.hpp"    // Class being tested.
 
 #include <gtest/gtest.h>
 
@@ -27,5 +27,12 @@ using namespace tribe;
 using namespace Solace;
 
 
-TEST(TestProtocol, test_1) {
+TEST(TestProtocol, test_parser) {
+	auto parser = MessageParser{};
+
+	byte buffer[128] = {0};
+	Solace::ByteReader reader{wrapMemory(buffer)};
+
+	auto message = parser.parse(reader);
+	ASSERT_FALSE(message.isOk());
 }

@@ -1,7 +1,14 @@
 
 set(SOURCE_FILES
+    networkAddress.cpp
+    ostream.cpp
     model.cpp
-    protocol.cpp
+    broadcastModel.cpp
+
+    protocol/decoder.cpp
+    protocol/encoder.cpp
+    protocol/messageParser.cpp
+    protocol/messageWriter.cpp
     )
 
 

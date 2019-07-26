@@ -4,7 +4,9 @@ set(TEST_SOURCE_FILES
 
         main_gtest.cpp
 
+        test_address.cpp
         test_model.cpp
+        test_broadcastModel.cpp
         test_protocol.cpp
     )
 
