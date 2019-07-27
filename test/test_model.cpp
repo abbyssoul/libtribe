@@ -213,21 +213,20 @@ TEST(Model, PronouncePeerDead_nonExistent) {
 
 
 TEST(Model, DecayPeerInfo) {
-//	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 1});
+	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 2});
+	initialModel = update(initialModel, AddPeer{anyAddress(12), {{2}, 0}, 3});
+	initialModel = update(initialModel, AddPeer{anyAddress(13), {{3}, 0}, 0});
+	initialModel = update(initialModel, PronouncePeerDead{{3}});
+	ASSERT_EQ(3, initialModel.members.size());
 
-//	{  // Check initial state of the peer
-//		auto it = initialModel.members.find({1});
-//		ASSERT_NE(it, initialModel.members.end());
-//		ASSERT_EQ(it->second.liveness.state, Peer::State::Alive);
-//	}
+	// Decay info such that all alive nodes transition to suspected in one go.
+	auto model = update(initialModel, DecayPeerInfo{1, 1000, (1 - Peer::kMaybeNotAlive*0.9f/Peer::kCertainlyAlive)});
+	ASSERT_EQ(2, model.members.size());
 
-
-//	auto model = update(initialModel, PronouncePeerDead{{1}});
-//	ASSERT_EQ(1, model.members.size());
-
-//	{
-//		auto it = model.members.find({1});
-//		ASSERT_NE(it, model.members.end());
-//		ASSERT_EQ(it->second.liveness.state, Peer::State::Dead);
-//	}
+	{
+		auto it = model.members.find({1});
+		ASSERT_NE(it, model.members.end());
+		ASSERT_EQ(it->second.liveness.ttl, 1);
+		ASSERT_EQ(it->second.liveness.state, Peer::State::Suspected);
+	}
 }

@@ -54,7 +54,9 @@ decayLiveness(Peer::Liveness value, uint16 dt, float32 decayRate, uint32 decayTi
 	value.probabitily = expDecay(value.probabitily, decayRate, dt*(decayTimeMs / 1000.f));
 
 	// Decrement TTL of the nodes
-	value.ttl = (value.ttl > 0) ? (value.ttl - dt) : 0;
+	value.ttl = (value.ttl > 0)
+			? (value.ttl - dt)  // FIXME: Underflow?
+			: 0;
 
 
 	// Update state
@@ -162,7 +164,6 @@ updatePeerAddress(PeersModel state, UpdatePeerAddress&& action) {
 
 PeersModel
 decayPeerInfo(PeersModel state, DecayPeerInfo decayParams) {
-
 	// Dacaying info producess side-effects - peers change states
 	for (auto& p : state.members) {
 		p.second.liveness = decayLiveness(p.second.liveness, decayParams.ttlDelta, decayParams.decayRate, decayParams.decayTimeMs);
