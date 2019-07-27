@@ -59,7 +59,7 @@ size_t hashAddress(Address const& address) noexcept {
 		return hashValue;
 	}
 	default:
-		// TODO: Error handling required
+		// TODO(abbyssoul): Error handling required
 		break;
 	}
 
@@ -98,7 +98,6 @@ tryParseIP4(StringView str) {
 	char presentationString[INET_ADDRSTRLEN] = {0};	 // 255.255.255.255
 	memset(presentationString, 0, sizeof(presentationString));
 	strncpy(presentationString, str.data(), str.size());
-//	presentationString[str.size() - 1] = 0;  // Always
 
 	in_addr result;
 	if (inet_pton(AF_INET, presentationString, &result) <= 0) {

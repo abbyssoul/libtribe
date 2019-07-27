@@ -84,18 +84,14 @@ namespace /* anonymous */ {
 
 PeersModel
 addSeed(PeersModel state, AddSeed&& seedAction) {
-	state.seeds.emplace_back(std::move(seedAction.address), seedAction.ttl);
+	state.seeds.try_emplace(std::move(seedAction.address), SeedPeer{seedAction.ttl});
 
 	return state;
 }
 
 PeersModel
-dropSeed(PeersModel state, Address&& address) {
-	eraseIf(state.seeds, [&](auto const& p) { return (p.address == address); });
-//	for (auto it = state.seeds.begin(); it != state.seeds.end(); ) {
-//		if (PeersModel::isExpired(it->second) ) it = state.seeds.erase(it);
-//		else ++it;
-//	}
+dropSeed(PeersModel state, Address const& address) {
+	state.seeds.erase(address);
 
 	return state;
 }
@@ -166,14 +162,19 @@ PeersModel
 decayPeerInfo(PeersModel state, DecayPeerInfo decayParams) {
 	// Dacaying info producess side-effects - peers change states
 	for (auto& p : state.members) {
-		p.second.liveness = decayLiveness(p.second.liveness, decayParams.ttlDelta, decayParams.decayRate, decayParams.decayTimeMs);
+		p.second.liveness = decayLiveness(p.second.liveness,
+										  decayParams.ttlDelta,
+										  decayParams.decayRate,
+										  decayParams.decayTimeMs);
 	}
 
 	// Remove expired peers
-//	eraseIf(state.members, PeersModel::isExpired);
 	for (auto it = state.members.begin(); it != state.members.end(); ) {
-		if (PeersModel::isExpired(it->second) ) it = state.members.erase(it);
-		else ++it;
+		if (PeersModel::isExpired(it->second)) {
+			it = state.members.erase(it);
+		} else {
+			++it;
+		}
 	}
 
 	return state;

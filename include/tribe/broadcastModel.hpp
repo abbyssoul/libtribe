@@ -21,7 +21,6 @@
 #include "nodeInfo.hpp"
 
 #include <unordered_map>
-//#include <unordered_set>
 #include <variant>
 
 
@@ -30,9 +29,9 @@ struct BroadcastGroup;
 }
 
 namespace std {
-	template <> struct hash<tribe::BroadcastGroup> {
-		size_t operator()(tribe::BroadcastGroup const& value) const noexcept;
-	};
+template <> struct hash<tribe::BroadcastGroup> {
+	size_t operator()(tribe::BroadcastGroup const& value) const noexcept;
+};
 }
 
 
@@ -41,8 +40,6 @@ namespace tribe {
 
 /// Broadcast group model
 struct BroadcastGroup {
-//	Address						address;				/// Network broadcast adddress eg. {"238.255.0.1", 5670};
-
 	Solace::uint16				hops{1};				/// Network hops limit.
 	Solace::int32				ttl{3};					/// TTL of the broadcast. Broadcast stops when this counter is 0
 	Solace::uint32				timeMs{2*1000};			/// Time in ms between each braodcast
@@ -54,9 +51,7 @@ bool operator== (BroadcastGroup const& lhs, BroadcastGroup const& rhs) noexcept;
 /// Broadcast model
 struct BroadcastModel {
 	std::unordered_map<Address, BroadcastGroup>	groups;
-//	std::unordered_set<BroadcastGroup>	groups;
 };
-
 
 
 // UDP Broadcast management
@@ -86,11 +81,5 @@ BroadcastModel
 update(BroadcastModel const& state, BroadcastAction&& action);
 
 }  // namespace tribe
-
-//namespace std {
-//	size_t hash<tribe::BroadcastGroup>::operator()(tribe::BroadcastGroup const& value) const noexcept {
-//		return hash<tribe::Address>()(value.address);
-//	}
-//}  // namespace std
 
 #endif  // TRIBE_BROADCASTMODEL_HPP

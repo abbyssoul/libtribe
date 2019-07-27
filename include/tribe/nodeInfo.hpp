@@ -70,4 +70,14 @@ struct NodeInfo {
 
 
 }  // namespace tribe
+
+namespace std {
+template <>
+struct hash<tribe::NodeID> {
+	size_t operator()(tribe::NodeID const& value) const noexcept {
+		return std::hash<decltype (tribe::NodeID::value)>{}(value.value);
+	}
+};
+}
+
 #endif  // TRIBE_NODE_INFO_HPP

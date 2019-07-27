@@ -67,12 +67,12 @@ Solace::Result<Address, Solace::Error> tryParseAddress(Solace::StringView value)
 
 
 namespace std {
-	template <>
-	struct hash<tribe::Address> {
-		size_t operator()(tribe::Address const& value) const noexcept {
-			return hashAddress(value);
-		}
-	};
+template <>
+struct hash<tribe::Address> {
+	size_t operator()(tribe::Address const& value) const noexcept {
+		return hashAddress(value);
+	}
+};
 }
 
 #endif  // TRIBE_NETWORKADDRESS_HPP

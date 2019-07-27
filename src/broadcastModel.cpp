@@ -32,33 +32,18 @@ BroadcastModel addGroup(BroadcastModel model, JoinBroadcastGroup const& group) {
 
 BroadcastModel dropGroup(BroadcastModel model, LeaveBroadcastGroup const& group) {
 	model.groups.erase(group.groupAddress);
-
-//	model.groups.erase(
-//				std::remove_if(model.groups.begin(), model.groups.end(), [&group](BroadcastGroup const& g) { return g.address == group.groupAddress;}),
-//				model.groups.end());
-
 	return model;
 }
 
 
 BroadcastModel
 broadcast(BroadcastModel model, Broadcast const& action) {
-	for (auto& group : model.groups) {
-		if (group.first == action.groupAddress) {
-			if (group.second.ttl > 0) {
-				group.second.ttl -= action.rounds;;
-//				auto groupNode = model.groups.extract(group);
-//				groupNode.value().ttl -= action.rounds;
-//				model.groups.insert(std::move(groupNode));
-//				break;
-			}
+	auto it = model.groups.find(action.groupAddress);
+	if (it != model.groups.end()) {
+		if (it->second.ttl > 0) {
+			it->second.ttl -= action.rounds;
 		}
 	}
-
-//	auto it = std::find_if(model.groups.begin(), model.groups.end(), [&action](BroadcastGroup const& g) { return g.address == action.groupAddress; });
-//	if (it == model.groups.end())
-//		return model;
-
 
 	return model;
 }
@@ -66,13 +51,9 @@ broadcast(BroadcastModel model, Broadcast const& action) {
 
 BroadcastModel
 updateRounds(BroadcastModel model, UpdateBroadcastRounds const& action) {
-	for (auto& group : model.groups) {
-		if (group.first == action.groupAddress) {
-			group.second.ttl = action.rounds;
-//				auto groupNode = model.groups.extract(group);
-//				model.groups.insert(std::move(groupNode));
-//				break;
-		}
+	auto it = model.groups.find(action.groupAddress);
+	if (it != model.groups.end()) {
+		it->second.ttl = action.rounds;
 	}
 
 	return model;

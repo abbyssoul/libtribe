@@ -21,7 +21,7 @@
 
 #include <solace/range_view.hpp>
 
-#include <map>
+#include <unordered_map>
 #include <variant>
 #include <functional>  // std::function - to handle side-effects
 
@@ -33,13 +33,7 @@ namespace tribe {
  * This is a peer we have not connected to yet but should try
  */
 struct SeedPeer {
-	Address         address;    //!< Network address of the node.
-	Solace::uint16	ttl;		//!< Number of connection attempt before we give up trying to connect to this node.
-
-	constexpr SeedPeer(Address addr, Solace::uint16 baseTtl) noexcept
-		: address{std::move(addr)}
-		, ttl{baseTtl}
-	{}
+	Solace::uint16	ttl;		//!< Number of connection attempt before we give up trying to contact this seed.
 };
 
 
@@ -101,7 +95,7 @@ struct MembershipSettings {
  * Model of cluster membership
  */
 struct PeersModel {
-	using PeerRangeView = Solace::RangeView<Peer, std::map<NodeID, Peer>::const_iterator>;
+	using PeerRangeView = Solace::RangeView<Peer, std::unordered_map<NodeID, Peer>::const_iterator>;
 
 	static bool isAlive(Peer const& p) noexcept { return (p.liveness.state == Peer::State::Alive); }
 	static bool isSuspected(Peer const& p) noexcept { return (p.liveness.state == Peer::State::Suspected); }
@@ -124,8 +118,8 @@ struct PeersModel {
 	NodeInfo				node;
 	MembershipSettings		params;
 
-	std::vector<SeedPeer>				seeds;
-	std::map<NodeID, Peer>	members;
+	std::unordered_map<Address, SeedPeer>	seeds;
+	std::unordered_map<NodeID, Peer>		members;
 };
 
 

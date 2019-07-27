@@ -46,11 +46,11 @@ TEST(Model, ForgetSeed) {
 	ASSERT_TRUE(maybeTestAddress.isOk());
 	auto const address = *maybeTestAddress;
 
-	auto model = update(PeersModel{}, AddSeed{address, 1});
-	ASSERT_EQ(1, model.seeds.size());
+	auto initialModel = update(PeersModel{}, AddSeed{address, 1});
+	ASSERT_EQ(1, initialModel.seeds.size());
 
-	auto model2 = update(model, ForgetSeed{address});
-	ASSERT_EQ(0, model2.seeds.size());
+	auto model = update(initialModel, ForgetSeed{address});
+	ASSERT_EQ(0, model.seeds.size());
 }
 
 
@@ -59,11 +59,11 @@ TEST(Model, ForgetSeed_nonExistent) {
 	ASSERT_TRUE(maybeTestAddress.isOk());
 	auto const address = *maybeTestAddress;
 
-	auto model = update(PeersModel{}, AddSeed{address, 1});
-	ASSERT_EQ(1, model.seeds.size());
+	auto initialModel = update(PeersModel{}, AddSeed{address, 1});
+	ASSERT_EQ(1, initialModel.seeds.size());
 
-	auto model2 = update(model, ForgetSeed{anyAddress(0)});
-	ASSERT_EQ(1, model2.seeds.size());
+	auto model = update(initialModel, ForgetSeed{anyAddress(0)});
+	ASSERT_EQ(1, model.seeds.size());
 }
 
 
