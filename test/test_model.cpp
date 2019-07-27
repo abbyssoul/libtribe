@@ -230,3 +230,15 @@ TEST(Model, DecayPeerInfo) {
 		ASSERT_EQ(it->second.liveness.state, Peer::State::Suspected);
 	}
 }
+
+
+TEST(Model, findRedirectAddress) {
+	ASSERT_TRUE(PeersModel{}.findRedirectAddress().isNone());
+
+	auto maybeTestAddress = tryParseAddress("10.1.2.3:7654");
+	ASSERT_TRUE(maybeTestAddress.isOk());
+	auto const address = *maybeTestAddress;
+
+	ASSERT_TRUE(update(PeersModel{}, AddPeer{address, {{1}, 0}, 0}).findRedirectAddress().isNone());
+	ASSERT_EQ(update(PeersModel{}, AddPeer{address, {{1}, 0}, 2}).findRedirectAddress(), address);
+}

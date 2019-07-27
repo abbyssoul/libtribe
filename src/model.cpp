@@ -186,7 +186,7 @@ decayPeerInfo(PeersModel state, DecayPeerInfo decayParams) {
 Optional<Address>
 PeersModel::findRedirectAddress() const {
 	for (auto const& peer : members) {
-		if (peer.second.liveness.state == Peer::State::Alive && peer.second.liveness.probabitily > peer.second.kCertainlyAlive) {
+		if (isHealthy(peer.second)) {
 			return peer.second.address;
 		}
 	}

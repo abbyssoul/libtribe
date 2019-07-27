@@ -108,6 +108,10 @@ struct PeersModel {
 	static bool isDead(Peer const& p) noexcept { return (p.liveness.state == Peer::State::Dead); }
 	static bool isExpired(Peer const& p) noexcept { return isDead(p) && (p.liveness.ttl == 0); }
 
+	static bool isHealthy(Peer const& p) noexcept {
+		return (isAlive(p) && p.liveness.ttl > 0 && p.liveness.probabitily > Peer::kMaybeNotAlive);
+	}
+
 
 	// return a list of peers that should be checked for liveness
 	PeerRangeView suspectedPeers() const noexcept	{ return {members.begin(), members.end(), isSuspected}; }
