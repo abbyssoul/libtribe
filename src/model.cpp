@@ -122,25 +122,29 @@ dropPeer(PeersModel state, NodeID peerId) {
 
 
 PeersModel
-pronouncePeerDead(PeersModel state, NodeID peerId) {
-	auto it = state.members.find(peerId);
+pronouncePeerDead(PeersModel state, PronouncePeerDead const& action) {
+	auto it = state.members.find(action.nodeInfo.id);
 	if (it != state.members.end()) {
-		it->second.liveness.state = Peer::State::Dead;
+		auto& peer = it->second;
+		if (peer.generation <= action.nodeInfo.gen) {
+			peer.liveness.state = Peer::State::Dead;
+		}
 	}
 
 	return state;
 }
 
+
 PeersModel
 updatePeerInfo(PeersModel state, UpdatePeerGeneration&& action) {
 	auto it = state.members.find(action.peerId);
 	if (it != state.members.end()) {
-		auto& member = it->second;
-		if (member.generation <= action.gen) {  // Update info iff newer generation
-			member.generation = action.gen;
+		auto& peer = it->second;
+		if (peer.generation <= action.gen) {  // Update info iff newer generation
+			peer.generation = action.gen;
 
-			member.liveness.ttl = action.ttl;
-			member.liveness.probabitily = Peer::kCertainlyAlive;
+			peer.liveness.ttl = action.ttl;
+			peer.liveness.probabitily = Peer::kCertainlyAlive;
 		}
 	}
 
@@ -149,9 +153,13 @@ updatePeerInfo(PeersModel state, UpdatePeerGeneration&& action) {
 
 PeersModel
 updatePeerAddress(PeersModel state, UpdatePeerAddress&& action) {
-	auto it = state.members.find(action.peerId);
+	auto it = state.members.find(action.nodeInfo.id);
 	if (it != state.members.end()) {
-		it->second.address = action.newAddress;
+		auto& peer = it->second;
+		if (peer.generation <= action.nodeInfo.gen) {
+			peer.generation = action.nodeInfo.gen;
+			peer.address = action.newAddress;
+		}
 	}
 
 	return state;
@@ -213,7 +221,7 @@ tribe::update(PeersModel const& state, Action&& action) {
 
 
 		PeersModel operator() (DecayPeerInfo&& action) const { return decayPeerInfo(state, action); }
-		PeersModel operator() (PronouncePeerDead&& action) const { return pronouncePeerDead(state, action.peerId); }
+		PeersModel operator() (PronouncePeerDead&& action) const { return pronouncePeerDead(state, action); }
 	};
 
 	return std::visit(ActionHandler{state}, std::move(action));

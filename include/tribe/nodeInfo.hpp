@@ -45,10 +45,6 @@ inline bool operator!= (NodeID const& lhs, NodeID const& rhs) noexcept {
 	return (lhs.value != rhs.value);
 }
 
-inline bool operator< (NodeID const& lhs, NodeID const& rhs) noexcept {
-	return (lhs.value < rhs.value);
-}
-
 
 inline bool operator== (GroupID const& lhs, GroupID const& rhs) noexcept {
 	return (lhs.value == rhs.value);

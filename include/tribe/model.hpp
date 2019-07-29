@@ -138,11 +138,11 @@ struct AddPeer				{ Address address; NodeInfo	nodeInfo; Solace::uint16 ttl; };
 /// Drop given peer from the peer table
 struct ForgetPeer			{ NodeID	peerId; };
 /// Update address for a particular peer
-struct UpdatePeerAddress	{ NodeID	peerId; Address newAddress; };
+struct UpdatePeerAddress	{ NodeInfo	nodeInfo; Address newAddress; };
 /// Update record for a particular peer
 struct UpdatePeerGeneration { NodeID	peerId; Solace::uint32  gen; Solace::uint16 ttl; };
 /// Change the state of a peer to 'dead'.
-struct PronouncePeerDead	{ NodeID	peerId; };
+struct PronouncePeerDead	{ NodeInfo	nodeInfo; };
 /// Decay infor about peer state as time passes
 struct DecayPeerInfo		{ Solace::uint16 ttlDelta; 	Solace::uint32 decayTimeMs; Solace::float32	decayRate; };
 

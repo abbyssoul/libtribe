@@ -20,6 +20,7 @@
  ******************************************************************************/
 #include "tribe/model.hpp"    // Class being tested.
 
+#include "tribe/ostream.hpp"  // ostream << Address
 #include <gtest/gtest.h>
 
 
@@ -73,6 +74,24 @@ TEST(Model, AddPeer) {
 	ASSERT_EQ(1, model.members.size());
 }
 
+
+TEST(Model, AddPeer_twice) {
+	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(0), {{1}, 0}, 1});
+
+	auto maybeTestAddress = tryParseAddress("10.1.2.3:7654");
+	ASSERT_TRUE(maybeTestAddress.isOk());
+	auto const address = *maybeTestAddress;
+
+	// Make sure that adding peer with the same id does not override existing records
+	auto model = update(initialModel, AddPeer{address, {{1}, 1}, 1});
+	ASSERT_EQ(1, model.members.size());
+
+	auto it = model.members.find({1});
+	ASSERT_NE(it, model.members.end());
+	ASSERT_NE(it->second.address, address);
+}
+
+
 TEST(Model, ForgetPeer) {
 	auto maybeTestAddress = tryParseAddress("10.1.2.3:7654");
 	ASSERT_TRUE(maybeTestAddress.isOk());
@@ -103,17 +122,32 @@ TEST(Model, UpdatePeerAddress) {
 	ASSERT_TRUE(maybeTestAddress.isOk());
 	auto const address = *maybeTestAddress;
 
-	auto model = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 1});
-	ASSERT_EQ(1, model.members.size());
-	ASSERT_EQ(std::find_if(model.members.begin(), model.members.end(),
-						   [&address](std::pair<NodeID, Peer> const& p){ return p.second.address == address; }),
-			model.members.end());
+	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 1});
+	ASSERT_EQ(1, initialModel.members.size());
+	auto initialIt = initialModel.members.find({1});
+	ASSERT_NE(initialIt, initialModel.members.end());
+	ASSERT_NE(initialIt->second.address, address);
 
-	auto model2 = update(model, UpdatePeerAddress{{1}, address});
-	ASSERT_EQ(1, model2.members.size());
-	ASSERT_NE(std::find_if(model2.members.begin(), model2.members.end(),
-						   [&address](std::pair<NodeID, Peer> const& p){ return p.second.address == address; }),
-			model2.members.end());
+	auto model = update(initialModel, UpdatePeerAddress{{{1}, 3}, address});
+	ASSERT_EQ(1, model.members.size());
+	{
+		auto it = model.members.find({1});
+		ASSERT_NE(it, model.members.end());
+		ASSERT_EQ(it->second.address, address);
+	}
+
+	{
+		auto maybeTestAddress2 = tryParseAddress("1.12.23.53:987");
+		ASSERT_TRUE(maybeTestAddress2.isOk());
+		auto const address2 = *maybeTestAddress2;
+
+		auto model2 = update(model, UpdatePeerAddress{{{1}, 1}, address2});
+		ASSERT_EQ(1, model2.members.size());
+		auto it = model2.members.find({1});
+		ASSERT_NE(it, model2.members.end());
+		ASSERT_NE(it->second.address, address2);
+		ASSERT_EQ(it->second.address, address);
+	}
 }
 
 
@@ -128,7 +162,7 @@ TEST(Model, UpdatePeerAddress_nonExistent) {
 						   [&address](std::pair<NodeID, Peer> const& p){ return p.second.address == address; }),
 			model.members.end());
 
-	auto model2 = update(model, UpdatePeerAddress{{7127}, address});
+	auto model2 = update(model, UpdatePeerAddress{{{7127}, 0}, address});
 	ASSERT_EQ(1, model2.members.size());
 	ASSERT_EQ(std::find_if(model2.members.begin(), model2.members.end(),
 						   [&address](std::pair<NodeID, Peer> const& p){ return p.second.address == address; }),
@@ -188,7 +222,7 @@ TEST(Model, PronouncePeerDead) {
 	}
 
 
-	auto model = update(initialModel, PronouncePeerDead{{1}});
+	auto model = update(initialModel, PronouncePeerDead{{{1}, 1}});
 	ASSERT_EQ(1, model.members.size());
 
 	{
@@ -200,7 +234,7 @@ TEST(Model, PronouncePeerDead) {
 
 TEST(Model, PronouncePeerDead_nonExistent) {
 	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 1});
-	auto model = update(initialModel, PronouncePeerDead{{32}});
+	auto model = update(initialModel, PronouncePeerDead{{{32}, 1}});
 	ASSERT_EQ(1, model.members.size());
 	ASSERT_EQ(model.members.find({32}), model.members.end());
 
@@ -216,7 +250,7 @@ TEST(Model, DecayPeerInfo) {
 	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 2});
 	initialModel = update(initialModel, AddPeer{anyAddress(12), {{2}, 0}, 3});
 	initialModel = update(initialModel, AddPeer{anyAddress(13), {{3}, 0}, 0});
-	initialModel = update(initialModel, PronouncePeerDead{{3}});
+	initialModel = update(initialModel, PronouncePeerDead{{{3}, 3}});
 	ASSERT_EQ(3, initialModel.members.size());
 
 	// Decay info such that all alive nodes transition to suspected in one go.
