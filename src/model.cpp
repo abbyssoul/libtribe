@@ -54,8 +54,8 @@ decayLiveness(Peer::Liveness value, uint16 dt, float32 decayRate, uint32 decayTi
 	value.probabitily = expDecay(value.probabitily, decayRate, dt*(decayTimeMs / 1000.f));
 
 	// Decrement TTL of the nodes
-	value.ttl = (value.ttl > 0)
-			? (value.ttl - dt)  // FIXME: Underflow?
+	value.ttl = (value.ttl > dt)
+			? (value.ttl - dt)
 			: 0;
 
 
@@ -169,17 +169,33 @@ updatePeerAddress(PeersModel state, UpdatePeerAddress&& action) {
 PeersModel
 decayPeerInfo(PeersModel state, DecayPeerInfo decayParams) {
 	// Dacaying info producess side-effects - peers change states
-	for (auto& p : state.members) {
-		p.second.liveness = decayLiveness(p.second.liveness,
-										  decayParams.ttlDelta,
-										  decayParams.decayRate,
-										  decayParams.decayTimeMs);
+	for (auto& peer : state.members) {
+		peer.second.liveness = decayLiveness(peer.second.liveness,
+											 decayParams.ttlDelta,
+											 decayParams.decayRate,
+											 decayParams.decayTimeMs);
+	}
+
+	// Dacaying seeds ttl
+	for (auto& seed : state.seeds) {
+		seed.second.ttl = (seed.second.ttl > decayParams.ttlDelta)
+				? seed.second.ttl - decayParams.ttlDelta
+				: 0;
 	}
 
 	// Remove expired peers
 	for (auto it = state.members.begin(); it != state.members.end(); ) {
 		if (PeersModel::isExpired(it->second)) {
 			it = state.members.erase(it);
+		} else {
+			++it;
+		}
+	}
+
+	// Remove expired seeds
+	for (auto it = state.seeds.begin(); it != state.seeds.end(); ) {
+		if (it->second.ttl == 0) {
+			it = state.seeds.erase(it);
 		} else {
 			++it;
 		}

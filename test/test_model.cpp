@@ -247,7 +247,9 @@ TEST(Model, PronouncePeerDead_nonExistent) {
 
 
 TEST(Model, DecayPeerInfo) {
-	auto initialModel = update(PeersModel{}, AddPeer{anyAddress(321), {{1}, 0}, 2});
+	auto initialModel = update(PeersModel{}, AddSeed{anyAddress(888), 1});
+
+	initialModel = update(initialModel, AddPeer{anyAddress(321), {{1}, 0}, 2});
 	initialModel = update(initialModel, AddPeer{anyAddress(12), {{2}, 0}, 3});
 	initialModel = update(initialModel, AddPeer{anyAddress(13), {{3}, 0}, 0});
 	initialModel = update(initialModel, PronouncePeerDead{{{3}, 3}});
@@ -256,11 +258,29 @@ TEST(Model, DecayPeerInfo) {
 	// Decay info such that all alive nodes transition to suspected in one go.
 	auto model = update(initialModel, DecayPeerInfo{1, 1000, (1 - Peer::kMaybeNotAlive*0.9f/Peer::kCertainlyAlive)});
 	ASSERT_EQ(2, model.members.size());
+	ASSERT_EQ(0, model.seeds.size());
 
 	{
 		auto it = model.members.find({1});
 		ASSERT_NE(it, model.members.end());
 		ASSERT_EQ(it->second.liveness.ttl, 1);
+		ASSERT_EQ(it->second.liveness.state, Peer::State::Suspected);
+	}
+}
+
+TEST(Model, DecayPeerInfo_dontUndeflow) {
+	auto initialModel = update(PeersModel{}, AddSeed{anyAddress(888), 2});
+	initialModel = update(initialModel, AddPeer{anyAddress(321), {{1}, 0}, 3});
+
+	// Decay info such that all alive nodes transition to suspected in one go.
+	auto model = update(initialModel, DecayPeerInfo{15, 1000, (1 - Peer::kMaybeNotAlive*0.9f/Peer::kCertainlyAlive)});
+	ASSERT_EQ(1, model.members.size());
+	ASSERT_EQ(0, model.seeds.size());
+
+	{
+		auto it = model.members.find({1});
+		ASSERT_NE(it, model.members.end());
+		ASSERT_EQ(it->second.liveness.ttl, 0);
 		ASSERT_EQ(it->second.liveness.state, Peer::State::Suspected);
 	}
 }
