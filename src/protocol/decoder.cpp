@@ -17,6 +17,11 @@
 
 #include "tribe/protocol/gossip.hpp"
 
+#include <solace/posixErrorDomain.hpp>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 using namespace Solace;
 
@@ -71,6 +76,43 @@ Decoder::read(MemoryView* data) {
 
 				return _src.advance(dataSize);
 			});
+}
+
+
+void readAddress(ByteReader& reader, sockaddr_in& addr) {
+	reader.read(&(addr.sin_port));
+	reader.read(&(addr.sin_addr.s_addr));
+}
+
+
+void readAddress(ByteReader& reader, sockaddr_in6& addr) {
+	reader.read((&addr.sin6_port));
+	auto view = wrapMemory(addr.sin6_addr.__in6_u.__u6_addr8);
+	reader.read(view);
+}
+
+
+Result<void, Error>
+Decoder::read(Address* addr) {
+	auto r = read(&addr->addr.ss_family);
+	if (!r) {
+		 return Err(r.getError());
+	}
+
+	switch (addr->addr.ss_family) {
+	case AF_INET: {
+		addr->size = sizeof (sockaddr_in);
+		readAddress(_src, *reinterpret_cast<sockaddr_in*>(&addr->addr));
+	} break;
+	case AF_INET6: {
+		addr->size = sizeof (sockaddr_in6);
+		readAddress(_src, *reinterpret_cast<sockaddr_in6*>(&addr->addr));
+	} break;
+	default:
+		return Err(makeError(BasicError::InvalidInput, "address family"));
+	}
+
+	return Ok();
 }
 
 }  // namespace tribe

@@ -48,11 +48,7 @@ struct Address {
 	{
 	}
 
-	constexpr Address(size_t addrSize, sockaddr_storage const& soAddr) noexcept
-		: size{addrSize}
-		, addr{soAddr}
-	{
-	}
+	Address(size_t addrSize, sockaddr_storage const& soAddr) noexcept;
 };
 
 bool operator== (Address const& lhs, Address const& rhs) noexcept;

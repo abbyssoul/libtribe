@@ -15,55 +15,46 @@
 */
 #include "encoder.hpp"
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 using namespace Solace;
 
 namespace tribe {
 
-Gossip::size_type
-Encoder::protocolSize(uint8 const& value) noexcept {
-	return sizeof(value);
+Encoder& operator<< (Encoder& encoder, Solace::uint8 value) {
+	encoder.writer().writeLE(value);
+	return encoder;
 }
 
-Gossip::size_type
-Encoder::protocolSize(uint16 const& value) noexcept {
-	return sizeof(value);
+Encoder& operator<< (Encoder& encoder, Solace::uint16 value) {
+	encoder.writer().writeLE(value);
+	return encoder;
 }
 
-Gossip::size_type
-Encoder::protocolSize(uint32 const& value) noexcept {
-	return sizeof(value);
+Encoder& operator<< (Encoder& encoder, Solace::uint32 value)  {
+	encoder.writer().writeLE(value);
+	return encoder;
 }
 
-Gossip::size_type
-Encoder::protocolSize(uint64 const& value) noexcept {
-	return sizeof(value);
+Encoder& operator<< (Encoder& encoder, Solace::uint64 value)  {
+	encoder.writer().writeLE(value);
+	return encoder;
 }
 
-Gossip::size_type
-Encoder::protocolSize(StringView const& str) noexcept {
-	return sizeof(Gossip::size_type) +         // Space for string var size
-			str.size();             // Space for the actual string bytes
+Encoder& operator<< (Encoder& encoder, Solace::StringView data) {
+	encoder << data.size();
+	encoder.writer().write(data.view());
+
+	return encoder;
 }
 
+Encoder& operator<< (Encoder& encoder, Solace::MemoryView data) {
+	encoder << data.size();
+	encoder.writer().write(data);
 
-Gossip::size_type
-Encoder::protocolSize(NodeID id) noexcept {
-	return protocolSize(id.value);
+	return encoder;
 }
-
-
-Gossip::size_type
-Encoder::protocolSize(Address const& address) noexcept {
-	return 0;  // FIXME: Implementation required
-}
-
-Gossip::size_type
-Encoder::protocolSize(NodeInfo const& node) noexcept {
-	return protocolSize(node.id) +	 // Proposed fid for authentication mechanism
-			protocolSize(node.gen);  // Root name where we want to attach to
-}
-
 
 Encoder&
 operator<< (Encoder& out, NodeID id) {
@@ -71,9 +62,37 @@ operator<< (Encoder& out, NodeID id) {
 }
 
 
+void writeAddress(ByteWriter& writer, sockaddr_in const& addr) {
+	writer.write(addr.sin_port);
+	writer.write(addr.sin_addr.s_addr);
+}
+
+
+void writeAddress(ByteWriter& writer, sockaddr_in6 const& addr) {
+	writer.write(addr.sin6_port);
+	auto view = wrapMemory(addr.sin6_addr.__in6_u.__u6_addr8);
+	writer.write(view);
+}
+
+
 Encoder&
-operator<< (Encoder& out, Address const& addr) {
-	return out;   // FIXME: Implementation required
+operator<< (Encoder& out, Address const& address) {
+	auto& writer = out.writer();
+	out << address.addr.ss_family;
+
+	switch (address.addr.ss_family) {
+	case AF_INET: {
+		writeAddress(writer, *reinterpret_cast<sockaddr_in const*>(&address.addr));
+	} break;
+	case AF_INET6: {
+		writeAddress(writer, *reinterpret_cast<sockaddr_in6 const*>(&address.addr));
+	} break;
+	default:
+		// TODO(abbyssoul): Error handling required
+		break;
+	}
+
+	return out;
 }
 
 

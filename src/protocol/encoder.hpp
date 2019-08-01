@@ -26,41 +26,6 @@ namespace tribe {
 
 
 struct Encoder {
-	/**
-	 * Compute the number of bytes in the buffer required to store a given value.
-	 * @param value Value to store in the message.
-	 * @return Number of bytes required to represent the value given.
-	 */
-	static Gossip::size_type protocolSize(Solace::uint8 const& value) noexcept;
-	/**
-	 * Compute the number of bytes in the buffer required to store a given value.
-	 * @param value Value to store in the message.
-	 * @return Number of bytes required to represent the value given.
-	 */
-	static Gossip::size_type protocolSize(Solace::uint16 const& value) noexcept;
-	/**
-	 * Compute the number of bytes in the buffer required to store a given value.
-	 * @param value Value to store in the message.
-	 * @return Number of bytes required to represent the value given.
-	 */
-	static Gossip::size_type protocolSize(Solace::uint32 const& value) noexcept;
-	/**
-	 * Compute the number of bytes in the buffer required to store a given value.
-	 * @param value Value to store in the message.
-	 * @return Number of bytes required to represent the value given.
-	 */
-	static Gossip::size_type protocolSize(Solace::uint64 const& value) noexcept;
-	/**
-	 * Compute the number of bytes in the buffer required to store a given value.
-	 * @param value Value to store in the message.
-	 * @return Number of bytes required to represent the value given.
-	 */
-	static Gossip::size_type protocolSize(Solace::StringView const& value) noexcept;
-
-	static Gossip::size_type protocolSize(NodeID id) noexcept;
-	static Gossip::size_type protocolSize(Address const& address) noexcept;
-	static Gossip::size_type protocolSize(NodeInfo const& node) noexcept;
-
 
 	constexpr Encoder(Solace::ByteWriter& dest) noexcept
 		: _dest{dest}
@@ -69,6 +34,7 @@ struct Encoder {
 	Encoder(Encoder const&) = delete;
 	Encoder& operator= (Encoder const&) = delete;
 
+	Solace::ByteWriter& writer() noexcept { return _dest; }
 
 private:
 

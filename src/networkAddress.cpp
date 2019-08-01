@@ -32,8 +32,9 @@ namespace tribe {
 
 
 bool operator== (Address const& lhs, Address const& rhs) noexcept {
-	return (lhs.size == rhs.size) && (std::memcmp(&lhs.addr, &rhs.addr, lhs.size) == 0);
-
+	return (lhs.size == rhs.size) &&
+			(lhs.addr.ss_family == rhs.addr.ss_family) &&
+			(std::memcmp(&lhs.addr, &rhs.addr, lhs.size) == 0);
 }
 
 bool operator!= (Address const& lhs, Address const& rhs) noexcept {
@@ -64,6 +65,13 @@ size_t hashAddress(Address const& address) noexcept {
 	}
 
 	return std::hash<size_t>{}(address.size);
+}
+
+
+Address::Address(size_t addrSize, sockaddr_storage const& soAddr) noexcept
+	: size{addrSize}
+{
+	memcpy(&addr, &soAddr, addrSize);
 }
 
 
@@ -120,28 +128,14 @@ parseIPAddress(StringView str) {
 	return Err(makeError(BasicError::InvalidInput, "parseIPAddress"));
 }
 
-
-
 Address
-anyAddress(uint16 port) noexcept {
-	sockaddr_in any;
-	any.sin_family = AF_INET;
-	any.sin_port = htons(port);
-	any.sin_addr.s_addr = INADDR_ANY;
-
-	return Address {
-		sizeof(sockaddr_in),
-		*reinterpret_cast<sockaddr_storage*>(&any)
-	};
-}
-
-Address
-asAddress(IPAddress const& address, uint16 port) {
+asAddress(IPAddress const& address, uint16 port) noexcept {
 
 	struct IPHandler {
 
 		Address operator() (in_addr const& addr) noexcept {
 			sockaddr_in so_addr;
+			memset(&so_addr, 0, sizeof(so_addr));
 			so_addr.sin_family = AF_INET;
 			so_addr.sin_port = htons(port);
 			so_addr.sin_addr = addr;
@@ -154,6 +148,7 @@ asAddress(IPAddress const& address, uint16 port) {
 
 		Address operator() (in6_addr const& addr) noexcept {
 			sockaddr_in6 so_addr;
+			memset(&so_addr, 0, sizeof(so_addr));
 			so_addr.sin6_family = AF_INET6;
 			so_addr.sin6_port = htons(port);
 			so_addr.sin6_addr = addr;
@@ -169,6 +164,12 @@ asAddress(IPAddress const& address, uint16 port) {
 
 	return std::visit(IPHandler{port}, address);
 }
+
+Address
+anyAddress(uint16 port) noexcept {
+	return asAddress(in_addr{INADDR_ANY}, port);
+}
+
 
 Result<Address, Error>
 tryParseAddress(StringView src) {

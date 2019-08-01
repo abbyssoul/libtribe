@@ -39,7 +39,7 @@ struct ConnectRequest {
 	Solace::MemoryView	auth;
 };
 
-/// Response acknowleding a node joning the group of the sender
+/// Response acknowleding a node joining the group of the sender
 struct ConnectResponseAck {
 	NodeInfo		self;  	// The peer you have joined
 	// TODO(abbyssoul): Encoded base state a view of the group this peer is sharing with requestor
@@ -48,7 +48,7 @@ struct ConnectResponseAck {
 /// Response when peer cannot accept requestor into a group but someone else in the group may
 struct ConnectResponseRedirect {
 	Address			otherNode;
-	Solace::Error		reason;
+	Solace::Error	reason;
 };
 
 /// Response when peer rejects connection request in a polite manner

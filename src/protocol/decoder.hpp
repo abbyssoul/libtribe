@@ -43,9 +43,7 @@ struct Decoder {
 
 	Solace::Result<void, Solace::Error> read(NodeID* id) { return read(&id->value); }
 
-	Solace::Result<void, Solace::Error> read(Address* addr) {
-		return Solace::Ok();  // FIXME: Not implemented
-	}
+	Solace::Result<void, Solace::Error> read(Address* addr);
 
 	Solace::Result<void, Solace::Error> read(NodeInfo* node) {
 		return read(&node->id)
