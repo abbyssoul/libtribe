@@ -286,9 +286,20 @@ TEST(Model, DecayPeerInfo_dontUndeflow) {
 }
 
 
-TEST(Model, findRedirectAddress) {
+TEST(Model, noPeerNoRedirect) {
 	ASSERT_TRUE(PeersModel{}.findRedirectAddress().isNone());
+}
 
+TEST(Model, dontRedirectToExpiredPeers) {
+	auto maybeTestAddress = tryParseAddress("10.1.2.3:7654");
+	ASSERT_TRUE(maybeTestAddress.isOk());
+	auto const address = *maybeTestAddress;
+
+	ASSERT_TRUE(update(PeersModel{}, AddPeer{address, {{1}, 0}, 0}).findRedirectAddress().isNone());
+}
+
+
+TEST(Model, findRedirectAddress) {
 	auto maybeTestAddress = tryParseAddress("10.1.2.3:7654");
 	ASSERT_TRUE(maybeTestAddress.isOk());
 	auto const address = *maybeTestAddress;

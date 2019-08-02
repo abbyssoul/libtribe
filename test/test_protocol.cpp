@@ -43,14 +43,8 @@ TEST(TestProtocol, test_parser) {
 
 struct TestGossipMessage : public ::testing::Test {
 
+	/// Test error
 	struct Error{};
-
-//	Result<void, Error> assertCondition(bool isOk) {
-//		if (!isOk)
-//			FAIL();
-
-//		return Ok();
-//	}
 
 	template<typename MessageType>
 	Result<MessageType, Error> expectMessage() {
